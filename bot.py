@@ -1,13 +1,15 @@
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+)
 import yfinance as yf
 from prophet import Prophet
 import pandas as pd
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import feedparser
 import datetime
-from prophet import Prophet
-
 
 TELEGRAM_TOKEN = '7722555638:AAF0ioO4jD0_sWUoWfr1NeXvDTiZ0NzXWVo'
 
@@ -51,7 +53,6 @@ def prepare_data(symbol):
         print(f"❌ Error preparing data for {symbol}: {e}")
         return None
 
-
 def predict_today(df):
     model = Prophet(daily_seasonality=True)
     model.fit(df)
@@ -73,23 +74,29 @@ def get_commodity_prices():
             indicators[name] = "N/A"
     return indicators
 
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Welcome to 📈 Smart Stock Bot!\nUse /predict SYMBOL\nExamples:\n/predict TCS\n/predict USDINR=X\n/predict ^NSEI")
+# === Async Handlers ===
 
-def predict(update: Update, context: CallbackContext):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "Welcome to 📈 Smart Stock Bot!\n"
+        "Use /predict SYMBOL\nExamples:\n"
+        "/predict TCS\n/predict USDINR=X\n/predict ^NSEI"
+    )
+
+async def predict(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        update.message.reply_text("⚠️ Please provide a stock/index/forex symbol. Example: /predict INFY or /predict ^NSEI")
+        await update.message.reply_text("⚠️ Please provide a stock/index/forex symbol. Example: /predict INFY or /predict ^NSEI")
         return
 
     raw = context.args[0].upper().strip()
     symbol = detect_symbol_type(raw)
     name = raw.replace('.NS', '').replace('=X', '').replace('^', '')
 
-    update.message.reply_text(f"⏳ Analyzing {raw}...")
+    await update.message.reply_text(f"⏳ Analyzing {raw}...")
 
     df = prepare_data(symbol)
     if df is None:
-        update.message.reply_text(f"❌ Unable to fetch or process data for {raw}.")
+        await update.message.reply_text(f"❌ Unable to fetch or process data for {raw}.")
         return
 
     try:
@@ -124,21 +131,21 @@ def predict(update: Update, context: CallbackContext):
 🌍 Market Indicators:
 """ + "\n".join([f"• {k}: {v}" for k, v in indicators.items()])
 
-        update.message.reply_text(message)
+        await update.message.reply_text(message)
 
         if headlines:
-            update.message.reply_text("📰 News:\n" + "\n".join([f"• {h}" for h in headlines]))
+            await update.message.reply_text("📰 News:\n" + "\n".join([f"• {h}" for h in headlines]))
 
     except Exception as e:
-        update.message.reply_text(f"❌ Error during prediction: {e}")
+        await update.message.reply_text(f"❌ Error during prediction: {e}")
+
+# === Main Application ===
 
 def main():
-    updater = Updater(TELEGRAM_TOKEN)
-    dp = updater.dispatcher
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("predict", predict))
-    updater.start_polling()
-    updater.idle()
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("predict", predict))
+    app.run_polling()
 
 if __name__ == '__main__':
     main()
