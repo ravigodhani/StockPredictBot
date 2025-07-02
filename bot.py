@@ -6,6 +6,8 @@ import pandas as pd
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import feedparser
 import datetime
+from prophet import Prophet
+
 
 TELEGRAM_TOKEN = '7722555638:AAF0ioO4jD0_sWUoWfr1NeXvDTiZ0NzXWVo'
 
