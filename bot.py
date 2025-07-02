@@ -1,9 +1,5 @@
 from telegram import Update
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    ContextTypes,
-)
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import yfinance as yf
 from prophet import Prophet
 import pandas as pd
@@ -30,9 +26,9 @@ def analyze_sentiment(headlines):
 
 def detect_symbol_type(symbol):
     if symbol.endswith('=X'):
-        return 'forex'
+        return symbol
     elif symbol.startswith('^'):
-        return 'index'
+        return symbol
     elif '.' not in symbol:
         return symbol + '.NS'
     return symbol
@@ -74,13 +70,14 @@ def get_commodity_prices():
             indicators[name] = "N/A"
     return indicators
 
-# === Async Handlers ===
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Welcome to 📈 Smart Stock Bot!\n"
-        "Use /predict SYMBOL\nExamples:\n"
-        "/predict TCS\n/predict USDINR=X\n/predict ^NSEI"
+        "Use /predict SYMBOL\n"
+        "Examples:\n"
+        "/predict TCS\n"
+        "/predict USDINR=X\n"
+        "/predict ^NSEI"
     )
 
 async def predict(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -138,8 +135,6 @@ async def predict(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         await update.message.reply_text(f"❌ Error during prediction: {e}")
-
-# === Main Application ===
 
 def main():
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
