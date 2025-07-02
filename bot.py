@@ -7,7 +7,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import feedparser
 import datetime
 
-TELEGRAM_TOKEN = '7722555638:AAF0ioO4jD0_sWUoWfr1NeXvDTiZ0NzXWVo'
+TELEGRAM_TOKEN = 'your-telegram-bot-token'
 
 COMMODITY_SYMBOLS = {
     'Crude Oil': 'CL=F',
@@ -25,9 +25,7 @@ def analyze_sentiment(headlines):
     return round(sum(scores)/len(scores), 3) if scores else 0
 
 def detect_symbol_type(symbol):
-    if symbol.endswith('=X'):
-        return symbol
-    elif symbol.startswith('^'):
+    if symbol.endswith('=X') or symbol.startswith('^'):
         return symbol
     elif '.' not in symbol:
         return symbol + '.NS'
@@ -37,7 +35,6 @@ def prepare_data(symbol):
     try:
         df = yf.download(symbol, period="6mo", interval="1d", auto_adjust=True, progress=False)
         if df.empty:
-            print(f"❌ No data for {symbol}")
             return None
         df = df.reset_index()
         df = df[['Date', 'Close']]
@@ -45,8 +42,7 @@ def prepare_data(symbol):
         df['y'] = pd.to_numeric(df['y'], errors='coerce')
         df.dropna(inplace=True)
         return df if not df.empty else None
-    except Exception as e:
-        print(f"❌ Error preparing data for {symbol}: {e}")
+    except:
         return None
 
 def predict_today(df):
@@ -72,7 +68,7 @@ def get_commodity_prices():
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Welcome to 📈 Smart Stock Bot!\n"
+        "📈 Welcome to Smart Stock Bot!\n"
         "Use /predict SYMBOL\n"
         "Examples:\n"
         "/predict TCS\n"
@@ -82,7 +78,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def predict(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("⚠️ Please provide a stock/index/forex symbol. Example: /predict INFY or /predict ^NSEI")
+        await update.message.reply_text("⚠️ Please provide a stock/index/forex symbol. Example: /predict INFY")
         return
 
     raw = context.args[0].upper().strip()
@@ -93,7 +89,7 @@ async def predict(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     df = prepare_data(symbol)
     if df is None:
-        await update.message.reply_text(f"❌ Unable to fetch or process data for {raw}.")
+        await update.message.reply_text(f"❌ No data available for {raw}.")
         return
 
     try:
@@ -134,7 +130,7 @@ async def predict(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("📰 News:\n" + "\n".join([f"• {h}" for h in headlines]))
 
     except Exception as e:
-        await update.message.reply_text(f"❌ Error during prediction: {e}")
+        await update.message.reply_text(f"❌ Error: {e}")
 
 def main():
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
@@ -142,5 +138,5 @@ def main():
     app.add_handler(CommandHandler("predict", predict))
     app.run_polling()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
