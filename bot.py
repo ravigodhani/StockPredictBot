@@ -7,7 +7,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import feedparser
 import datetime
 
-TELEGRAM_TOKEN = 'your-telegram-bot-token'
+TELEGRAM_TOKEN = '7722555638:AAF0ioO4jD0_sWUoWfr1NeXvDTiZ0NzXWVo'
 
 COMMODITY_SYMBOLS = {
     'Crude Oil': 'CL=F',
